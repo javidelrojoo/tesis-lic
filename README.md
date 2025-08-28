@@ -1,2 +1,2 @@
-# tesis-lic
-Repositorio de los códigos utilizados para la tesis de licenciatura en la Universidad de Buenos Aires (UBA).
+# Obtención de grafos de conexión de autoensamblados neuromórficos a partir de sus fotomicrografías
+Javier Tau Anzoátegui. Lugar de trabajo: LINE, ECyT-UNSAM. Directores: Cynthia Quinteros y Oscar Filevich.
