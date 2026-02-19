@@ -17,7 +17,7 @@ class SkeletonAnalysis:
         self.has_electrodes = True
     
     def img_cleaning(self):
-        self.img = remove_small_holes(self.img.astype(bool), area_threshold=30)
+        self.img = remove_small_holes(self.img.astype(bool), area_threshold=2)
         self.img = opening(self.img, footprint=disk(1))
     
     def skeletonize(self):
@@ -93,33 +93,79 @@ class SkeletonAnalysis:
     
     def plot_graph(self, save_path=None):
         pos = {}
+        
+        if self.has_electrodes:
+            
+            _, binaria1 = cv2.threshold(self.electrode_mask1, 127, 255, cv2.THRESH_BINARY)
+            M1 = cv2.moments(binaria1)
+            cx1 = int(M1["m10"] / M1["m00"])
+            cy1 = int(M1["m01"] / M1["m00"])
+            
+            _, binaria2 = cv2.threshold(self.electrode_mask2, 127, 255, cv2.THRESH_BINARY)
+            M2 = cv2.moments(binaria2)
+            cx2 = int(M2["m10"] / M2["m00"])
+            cy2 = int(M2["m01"] / M2["m00"])
+            
         for i, n in enumerate(self.G.nodes):
             if n == "Vin":
-                pos[n] = (2400, -1000)  # arbitrary position
+                pos[n] = (cx1, cy1)
             elif n == "Vout":
-                pos[n] = (3200, -4500)  # arbitrary position
+                pos[n] = (cx2, cy2)
             else:
                 y, x = self.node_coords[n]
                 pos[n] = (x, y)
+        
+        nodos_electrodos = [n for n in self.G.nodes if n in ["Vin", "Vout"]]
+        nodos_red = [n for n in self.G.nodes if n not in ["Vin", "Vout"]]
+        
         plt.figure(figsize=(8, 8))
-        nx.draw(self.G, pos, node_size=25, width=0.8)
+        
+        nx.draw_networkx_edges(self.G, pos, width=0.8)
+        nx.draw_networkx_nodes(self.G, pos, nodelist=nodos_red, node_size=25, node_color='#1f78b4')
+        nx.draw_networkx_nodes(self.G, pos, nodelist=nodos_electrodos, node_size=150, node_color='red')
         plt.imshow(self.img, cmap='gray')
         plt.axis('off')
         if save_path:
             plt.savefig(save_path, bbox_inches='tight', pad_inches=0, dpi=400)
         plt.show()
     
-    def complete_analysis(self, electrodes_path=None, save_graph_path=None, plot=True, save_plot_path=None):
+    def complete_analysis(self, electrodes_path=None, save_graph_path=None, plot=True, save_plot_path=None, verbose=False):
+        if verbose:
+            print("Iniciando análisis completo...")
+        
         self.img_cleaning()
+        if verbose:
+            print("Imagen limpiada.")
+        
         if electrodes_path:
             self.load_electrodes(*electrodes_path)
+            if verbose:
+                print("Máscaras de electrodos cargadas.")
+        
         self.skeletonize()
+        if verbose:
+            print("Esqueleto generado.")
+            
         self.get_network()
+        if verbose:
+            print("Red obtenida del esqueleto.")
+        
         self.clean_network()
+        if verbose:
+            print("Red limpiada.")
+        
         self.convert_to_line_graph()
+        if verbose:
+            print("Convertida a grafo de líneas.")
+        
         if save_graph_path:
             self.save_graph(save_graph_path)
+            if verbose:
+                print(f"Grafo guardado en {save_graph_path}.")
+        
         if plot:
             self.plot_graph(save_plot_path)
+            if verbose:
+                print("Gráfico generado.")
     
     
