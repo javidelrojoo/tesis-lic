@@ -120,7 +120,7 @@ class SkeletonAnalysis:
         
         plt.figure(figsize=(8, 8))
         
-        nx.draw_networkx_edges(self.G, pos, width=0.8)
+        nx.draw_networkx_edges(self.G, pos, width=1.5, edge_color='green', node_size=25)
         nx.draw_networkx_nodes(self.G, pos, nodelist=nodos_red, node_size=25, node_color='#1f78b4')
         nx.draw_networkx_nodes(self.G, pos, nodelist=nodos_electrodos, node_size=150, node_color='red')
         plt.imshow(self.img, cmap='gray')
