@@ -129,7 +129,7 @@ class SkeletonAnalysis:
             plt.savefig(save_path, bbox_inches='tight', pad_inches=0, dpi=400)
         plt.show()
     
-    def complete_analysis(self, electrodes_path=None, save_graph_path=None, plot=True, save_plot_path=None, verbose=False):
+    def complete_analysis(self, electrodes_path=None, save_graph_path=None, plot=False, save_plot_path=None, verbose=False):
         if verbose:
             print("Iniciando análisis completo...")
         

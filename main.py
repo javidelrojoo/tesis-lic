@@ -2,7 +2,7 @@ from SkeletonAnalysis import SkeletonAnalysis
 
 muestra = 'M3'
 dir_path = './muestras/' + muestra + '/'
-img_path = dir_path + 'M30007_binary.tiff'
+img_path = dir_path + 'M30007_binary.tif'
 electrodes_path = (dir_path + 'M30007_electrode1.tif', dir_path + 'M30007_electrode2.tif')
 
 SA = SkeletonAnalysis(img_path)
