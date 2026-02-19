@@ -1,0 +1,16 @@
+# Define the number of dimensions we are working on
+dim = 2
+
+# Define the image coordinates
+JAVI0821.JPG; ; (0.0, 0.0)
+JAVI0822.JPG; ; (1814.0, 0.0)
+JAVI0823.JPG; ; (3628.0, 0.0)
+JAVI0826.JPG; ; (0.0, 1360.0)
+JAVI0825.JPG; ; (1814.0, 1360.0)
+JAVI0824.JPG; ; (3628.0, 1360.0)
+JAVI0827.JPG; ; (0.0, 2720.0)
+JAVI0828.JPG; ; (1814.0, 2720.0)
+JAVI0829.JPG; ; (3628.0, 2720.0)
+JAVI0832.JPG; ; (0.0, 4080.0)
+JAVI0831.JPG; ; (1814.0, 4080.0)
+JAVI0830.JPG; ; (3628.0, 4080.0)

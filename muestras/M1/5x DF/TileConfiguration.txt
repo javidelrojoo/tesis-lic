@@ -1,0 +1,10 @@
+# Define the number of dimensions we are working on
+dim = 2
+
+# Define the image coordinates
+M10035.JPG; ; (0.0, 0.0)
+M10036.JPG; ; (640.0, 0.0)
+M10037.JPG; ; (0.0, 480.0)
+M10038.JPG; ; (640.0, 480.0)
+M10039.JPG; ; (0.0, 960.0)
+M10040.JPG; ; (640.0, 960.0)
