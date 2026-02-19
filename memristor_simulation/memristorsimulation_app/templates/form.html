@@ -776,6 +776,7 @@ document.getElementById("simulationForm").addEventListener("submit", function(ev
         .then(blob => {
             hideProgressModal();
             
+            /*
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.style.display = 'none';
@@ -789,7 +790,8 @@ document.getElementById("simulationForm").addEventListener("submit", function(ev
             
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            
+            */
+           
             showMessage("Simulation completed successfully! The results file has been downloaded.");
         })
         .catch(error => {
