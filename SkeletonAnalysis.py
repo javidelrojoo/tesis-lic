@@ -47,7 +47,7 @@ class SkeletonAnalysis:
                 if self.contact_points2[int(y), int(x)]:
                     electrode_nodes2.append(node_id)
 
-            self.G.add_node("Vin", pos=(2400, -1000))  # arbitrary position if you plot later
+            self.G.add_node("Vin", pos=(2400, -1000))
             self.G.add_node("Vout", pos=(3200, -4500))  
 
             for n in electrode_nodes1:
@@ -56,8 +56,37 @@ class SkeletonAnalysis:
             for n in electrode_nodes2:
                 self.G.add_edge("Vout", n)
     
-    def convert2line_graph(self):
+    def clean_network(self):
+        changed = True
+        while changed:
+            changed = False
+
+            # Remove degree 1 nodes iteratively
+            deg1_nodes = [n for n, d in self.G.degree() if d == 1]
+            if deg1_nodes:
+                self.G.remove_nodes_from(deg1_nodes)
+                changed = True
+
+            # Collapse degree 2 nodes iteratively
+            deg2_nodes = [n for n, d in self.G.degree() if d == 2]
+            for n in deg2_nodes:
+                neighbors = list(self.G.neighbors(n))
+                if len(neighbors) == 2:
+                    u, v = neighbors
+                    self.G.add_edge(u, v)
+                self.G.remove_node(n)
+                changed = True
+
+            if any(nx.selfloop_edges(self.G)):
+                self.G.remove_edges_from(nx.selfloop_edges(self.G))
+                changed = True
+    
+    def convert_to_line_graph(self):
         self.L = nx.line_graph(self.G)
         self.L = nx.Graph(self.L)
     
-    
+    def save_graph(self, path, save_line_graph=True):
+        if save_line_graph:
+            nx.write_graphml(self.L, path)
+        else:
+            nx.write_graphml(self.G, path)
