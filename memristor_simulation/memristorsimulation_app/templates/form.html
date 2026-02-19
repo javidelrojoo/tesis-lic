@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memristor Simulation</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/form.css' %}">
+</head>
+<body>
+
+<div class="form-container">
+    <form id="simulationForm" method="post">
+        {% csrf_token %}
+        
+        <div class="form-columns">
+            <div class="form-column">
+                <div class="form-section">
+                    <h3>Model Configuration</h3>
+                    
+                    <div class="form-group">
+                        <label for="model">Memristor Model:</label>
+                        <select id="model" name="model" required>
+                            <option value="pershin.sub" selected>Pershin</option>
+                            <option value="vourkas.sub">Vourkas</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="alpha">Alpha:</label>
+                        <input type="number" step="any" id="alpha" name="alpha" value="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="beta">Beta:</label>
+                        <input type="number" step="any" id="beta" name="beta" value="500000" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="rinit">Rinit:</label>
+                        <input type="number" step="any" id="rinit" name="rinit" value="200000" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="roff">Roff:</label>
+                        <input type="number" step="any" id="roff" name="roff" value="200000" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ron">Ron:</label>
+                        <input type="number" step="any" id="ron" name="ron" value="2000" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="vt">Vt:</label>
+                        <input type="number" step="any" id="vt" name="vt" value="0.6" required>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Input Parameters</h3>
+                    
+                    <div class="form-group">
+                        <label for="source_number">Source Number:</label>
+                        <input type="number" id="source_number" name="source_number" value="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="n_plus">Positive Node:</label>
+                        <input type="text" id="n_plus" name="n_plus" value="vin" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="n_minus">Negative Node:</label>
+                        <input type="text" id="n_minus" name="n_minus" value="gnd" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-column">
+                <div class="form-section">
+                    <h3>Waveform Configuration</h3>
+                    
+                    <div class="form-group">
+                        <label for="wave_form_type">Waveform Type:</label>
+                        <select id="wave_form_type" name="wave_form_type" required onchange="updateWaveformParameters()">
+                            <option value="sin" selected>Sinusoidal (SIN)</option>
+                            <option value="pulse">Pulse (PULSE)</option>
+                            <option value="pwl">PWL</option>
+                        </select>
+                    </div>
+                    
+                    <div id="sin_parameters" class="wave-form-params">
+                        <div class="form-group">
+                            <label for="vo">Voltage Offset (Vo):</label>
+                            <input type="number" step="any" id="vo" name="vo" value="0" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="amplitude">Amplitude:</label>
+                            <input type="number" step="any" id="amplitude" name="amplitude" value="1" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="frequency">Frequency:</label>
+                            <input type="number" step="any" id="frequency" name="frequency" value="1" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="td">Time Delay (td):</label>
+                            <input type="number" step="any" id="td" name="td" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="theta">Theta:</label>
+                            <input type="number" step="any" id="theta" name="theta" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phase">Phase:</label>
+                            <input type="number" step="any" id="phase" name="phase" value="0">
+                        </div>
+                    </div>
+                    
+                    <div id="pulse_parameters" class="wave-form-params" style="display: none;">
+                        <div class="form-group">
+                            <label for="v1">V1:</label>
+                            <input type="number" step="any" id="v1" name="v1" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="v2">V2:</label>
+                            <input type="number" step="any" id="v2" name="v2" value="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pulse_td">Time Delay (td):</label>
+                            <input type="number" step="any" id="pulse_td" name="pulse_td" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tr">Rise Time (tr):</label>
+                            <input type="number" step="any" id="tr" name="tr" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tf">Fall Time (tf):</label>
+                            <input type="number" step="any" id="tf" name="tf" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pw">Pulse Width (pw):</label>
+                            <input type="number" step="any" id="pw" name="pw" value="0.5">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="per">Period (per):</label>
+                            <input type="number" step="any" id="per" name="per" value="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="np">Number of Pulses (np):</label>
+                            <input type="number" id="np" name="np" value="0">
+                        </div>
+                    </div>
+                    
+                    <div id="pwl_parameters" class="wave-form-params" style="display: none;">
+                        <div class="form-group">
+                            <label for="pwl_v1">V1:</label>
+                            <input type="number" step="any" id="pwl_v1" name="pwl_v1" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pwl_v2">V2 (comma separated):</label>
+                            <input type="text" id="pwl_v2" name="pwl_v2" value="1,-1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pwl_td">Time Delay (td):</label>
+                            <input type="number" step="any" id="pwl_td" name="pwl_td" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pwl_tr">Rise Time (tr):</label>
+                            <input type="number" step="any" id="pwl_tr" name="pwl_tr" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pwl_tf">Fall Time (tf):</label>
+                            <input type="number" step="any" id="pwl_tf" name="pwl_tf" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pwl_pw">Pulse Width (pw):</label>
+                            <input type="number" step="any" id="pwl_pw" name="pwl_pw" value="0.5">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pwl_per">Period (per):</label>
+                            <input type="number" step="any" id="pwl_per" name="pwl_per" value="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pwl_np">Number of Pulses (np):</label>
+                            <input type="number" id="pwl_np" name="pwl_np" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Simulation Parameters</h3>
+                    
+                    <div class="form-group">
+                        <label for="analysis_type">Analysis Type:</label>
+                        <select id="analysis_type" name="analysis_type" required>
+                            <option value=".tran" selected>Transient (.tran)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tstep">Time Step (tstep):</label>
+                        <input type="number" step="any" id="tstep" name="tstep" value="2e-3" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tstop">Stop Time (tstop):</label>
+                        <input type="number" step="any" id="tstop" name="tstop" value="10" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tstart">Start Time (tstart) - Optional:</label>
+                        <input type="number" step="any" id="tstart" name="tstart" value="">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tmax">Max Time (tmax) - Optional:</label>
+                        <input type="number" step="any" id="tmax" name="tmax" value="">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="uic" name="uic" checked>
+                            Use Initial Conditions (UIC)
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-column">
+                <div class="form-section">
+                    <h3>Export Parameters</h3>
+                    
+                    <div class="form-group">
+                        <label for="folder_name">Folder Name:</label>
+                        <input type="text" id="folder_name" name="folder_name" value="simulation_folder" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="file_name">File Name:</label>
+                        <input type="text" id="file_name" name="file_name" value="simulation_name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="magnitudes">Magnitudes (comma separated):</label>
+                        <input type="text" id="magnitudes" name="magnitudes" value="vin,i(v1)" required>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Network Configuration</h3>
+                    
+                    <div class="form-group">
+                        <label for="network_type">Network Type:</label>
+                        <select id="network_type" name="network_type" required onchange="updateNetworkParameters()">
+                            <option value="SINGLE_DEVICE" selected>Single Device</option>
+                            <option value="GRID_2D_GRAPH">Grid 2D</option>
+                            <option value="RANDOM_REGULAR_GRAPH">Random Regular</option>
+                            <option value="WATTS_STROGATZ_GRAPH">Watts Strogatz</option>
+                        </select>
+                    </div>
+                    
+                    <div id="grid_2d_params" class="network-params" style="display: none;">
+                        <div class="form-group">
+                            <label for="n">N (rows):</label>
+                            <input type="number" id="n" name="n" value="4">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="m">M (columns):</label>
+                            <input type="number" id="m" name="m" value="4">
+                        </div>
+                    </div>
+                    
+                    <div id="random_regular_params" class="network-params" style="display: none;">
+                        <div class="form-group">
+                            <label for="amount_connections">Number of Connections:</label>
+                            <input type="number" id="amount_connections" name="amount_connections" value="4">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="amount_nodes">Number of Nodes:</label>
+                            <input type="number" id="amount_nodes" name="amount_nodes" value="10">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="seed">Seed (optional):</label>
+                            <input type="number" id="seed" name="seed" value="">
+                        </div>
+                    </div>
+                    
+                    <div id="watts_strogatz_params" class="network-params" style="display: none;">
+                        <div class="form-group">
+                            <label for="ws_amount_connections">Number of Connections:</label>
+                            <input type="number" id="ws_amount_connections" name="ws_amount_connections" value="4">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="ws_amount_nodes">Number of Nodes:</label>
+                            <input type="number" id="ws_amount_nodes" name="ws_amount_nodes" value="10">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="shortcut_probability">Shortcut Probability:</label>
+                            <input type="number" step="any" id="shortcut_probability" name="shortcut_probability" value="0.1" min="0" max="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="ws_seed">Seed (optional):</label>
+                            <input type="number" id="ws_seed" name="ws_seed" value="">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Plotter</h3>
+                    
+                    <div class="checkbox-group">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" name="plot_types" value="IV" checked>
+                                I-V
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" name="plot_types" value="IV_LOG" checked>
+                                I-V log
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" name="plot_types" value="CURRENT_AND_VIN_VS_TIME" checked>
+                                Current and vin vs time
+                            </label>
+                        </div>
+                        
+                        <div class="form-group network-graph-only">
+                            <label>
+                                <input type="checkbox" name="plot_types" value="GRAPH" checked>
+                                Graph
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitButton">Execute Simulation</button>
+    </form>
+</div>
+
+<div id="progressModal" class="modal progress-modal" style="display: none;">
+    <div class="modal-content progress-modal-content">
+        <div class="progress-body">
+            <h2>Running Simulation</h2>
+            
+            <div class="loading-spinner"></div>
+            
+            <div class="progress-info">
+                <p>The simulation is currently running. Please wait...</p>
+                <div class="elapsed-time">
+                    Elapsed time: <span id="elapsedTime">0s</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="progress-footer">
+            <button class="cancel-btn" onclick="cancelSimulation()">Cancel Simulation</button>
+        </div>
+    </div>
+</div>
+
+<div id="messageModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <div class="modal-body">
+            <div id="modalIcon" class="modal-icon"></div>
+            <div id="modalTitle" class="modal-title"></div>
+            <div id="modalMessage" class="modal-message"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-button" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let simulationInProgress = false;
+let elapsedTimeInterval;
+let simulationStartTime;
+let currentAbortController;
+
+function showProgressModal() {
+    const modal = document.getElementById('progressModal');
+    simulationInProgress = true;
+    simulationStartTime = Date.now();
+    
+    document.getElementById('elapsedTime').textContent = '0s';
+    
+    modal.style.display = 'flex';
+    
+    const submitBtn = document.getElementById('submitButton');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Simulation Running...';
+    submitBtn.style.opacity = '0.6';
+    
+    elapsedTimeInterval = setInterval(updateElapsedTime, 1000);
+}
+
+function updateElapsedTime() {
+    if (!simulationStartTime) return;
+    
+    const elapsed = Math.floor((Date.now() - simulationStartTime) / 1000);
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = elapsed % 60;
+    
+    if (minutes > 0) {
+        document.getElementById('elapsedTime').textContent = `${minutes}m ${seconds}s`;
+    } else {
+        document.getElementById('elapsedTime').textContent = `${seconds}s`;
+    }
+}
+
+function hideProgressModal() {
+    const modal = document.getElementById('progressModal');
+    modal.style.display = 'none';
+    simulationInProgress = false;
+    
+    if (elapsedTimeInterval) {
+        clearInterval(elapsedTimeInterval);
+        elapsedTimeInterval = null;
+    }
+    
+    const submitBtn = document.getElementById('submitButton');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Execute Simulation';
+    submitBtn.style.opacity = '1';
+}
+
+function cancelSimulation() {
+    if (currentAbortController) {
+        currentAbortController.abort();
+    }
+    hideProgressModal();
+    showMessage("Simulation cancelled by user.", true);
+}
+
+function updateWaveformParameters() {
+    const waveformType = document.getElementById('wave_form_type').value;
+    const allParams = document.querySelectorAll('.wave-form-params');
+    
+    allParams.forEach(param => param.style.display = 'none');
+    
+    if (waveformType === 'sin') {
+        document.getElementById('sin_parameters').style.display = 'block';
+    } else if (waveformType === 'pulse') {
+        document.getElementById('pulse_parameters').style.display = 'block';
+    } else if (waveformType === 'pwl') {
+        document.getElementById('pwl_parameters').style.display = 'block';
+    }
+}
+
+function updateNetworkParameters() {
+    const networkType = document.getElementById('network_type').value;
+    const allParams = document.querySelectorAll('.network-params');
+    const singleDeviceOnlyPlots = document.querySelectorAll('.single-device-only');
+    const networkGraphOnlyPlots = document.querySelectorAll('.network-graph-only');
+    
+    allParams.forEach(param => param.style.display = 'none');
+    
+    if (networkType === 'GRID_2D_GRAPH') {
+        document.getElementById('grid_2d_params').style.display = 'block';
+    } else if (networkType === 'RANDOM_REGULAR_GRAPH') {
+        document.getElementById('random_regular_params').style.display = 'block';
+    } else if (networkType === 'WATTS_STROGATZ_GRAPH') {
+        document.getElementById('watts_strogatz_params').style.display = 'block';
+    }
+    
+    if (networkType === 'SINGLE_DEVICE') {
+        singleDeviceOnlyPlots.forEach(plot => plot.style.display = 'block');
+    } else {
+        singleDeviceOnlyPlots.forEach(plot => {
+            plot.style.display = 'none';
+            const checkbox = plot.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+        });
+    }
+    
+    if (networkType === 'RANDOM_REGULAR_GRAPH' || networkType === 'WATTS_STROGATZ_GRAPH') {
+        networkGraphOnlyPlots.forEach(plot => plot.style.display = 'block');
+    } else {
+        networkGraphOnlyPlots.forEach(plot => {
+            plot.style.display = 'none';
+            const checkbox = plot.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+        });
+    }
+}
+
+function showMessage(message, isError = false) {
+    const modal = document.getElementById('messageModal');
+    const modalIcon = document.getElementById('modalIcon');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    
+    if (isError) {
+        modalIcon.innerHTML = '⚠️';
+        modalTitle.textContent = 'Error';
+        modalMessage.textContent = message;
+        modalIcon.style.color = '#dc3545';
+        modalTitle.style.color = '#dc3545';
+    } else {
+        modalIcon.innerHTML = '✅';
+        modalTitle.textContent = 'Success';
+        modalMessage.textContent = message;
+        modalIcon.style.color = '#28a745';
+        modalTitle.style.color = '#28a745';
+    }
+    
+    modal.style.display = 'flex';
+    
+    if (!isError) {
+        setTimeout(() => {
+            closeModal();
+        }, 5000);
+    }
+}
+
+function closeModal() {
+    document.getElementById('messageModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const messageModal = document.getElementById('messageModal');
+    if (event.target === messageModal) {
+        closeModal();
+    }
+}
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeModal();
+        if (simulationInProgress && confirm('Are you sure you want to cancel the simulation?')) {
+            cancelSimulation();
+        }
+    }
+});
+
+function validateForm(formData) {
+    const networkType = formData.get("network_type");
+    const waveformType = formData.get("wave_form_type");
+    
+    let requiredFields = [
+        'model', 'alpha', 'beta', 'rinit', 'roff', 'ron', 'vt',
+        'source_number', 'n_plus', 'n_minus', 'wave_form_type',
+        'analysis_type', 'tstep', 'tstop',
+        'folder_name', 'file_name', 'magnitudes', 'network_type'
+    ];
+    
+    if (waveformType === 'sin') {
+        requiredFields.push('vo', 'amplitude', 'frequency');
+    } else if (waveformType === 'pulse') {
+        requiredFields.push('v1', 'v2');
+    } else if (waveformType === 'pwl') {
+        requiredFields.push('pwl_v1', 'pwl_v2');
+    }
+    
+    if (networkType === 'GRID_2D_GRAPH') {
+        requiredFields.push('n', 'm');
+    } else if (networkType === 'RANDOM_REGULAR_GRAPH') {
+        requiredFields.push('amount_connections', 'amount_nodes');
+    } else if (networkType === 'WATTS_STROGATZ_GRAPH') {
+        requiredFields.push('ws_amount_connections', 'ws_amount_nodes', 'shortcut_probability');
+    }
+    
+    const missingFields = [];
+    
+    for (const field of requiredFields) {
+        const value = formData.get(field);
+        if (!value || value.trim() === '') {
+            missingFields.push(field);
+        }
+    }
+    
+    const checkedPlotTypes = formData.getAll("plot_types");
+    if (checkedPlotTypes.length === 0) {
+        missingFields.push("plot_types");
+    }
+    
+    return missingFields;
+}
+
+function buildRequestData(formData) {
+    const magnitudes = formData.get("magnitudes").split(",").map(s => s.trim());
+    const plotTypes = formData.getAll("plot_types");
+    
+    const model = formData.get("model");
+    const modelSimulationFolder = model === "pershin.sub" ? "pershin_simulations" : "vourkas_simulations";
+    
+    const networkType = formData.get("network_type");
+    let networkParameters = {};
+    
+    if (networkType === 'GRID_2D_GRAPH') {
+        networkParameters = {
+            n: parseInt(formData.get("n")),
+            m: parseInt(formData.get("m"))
+        };
+    } else if (networkType === 'RANDOM_REGULAR_GRAPH') {
+        networkParameters = {
+            amount_connections: parseInt(formData.get("amount_connections")),
+            amount_nodes: parseInt(formData.get("amount_nodes")),
+            seed: formData.get("seed") ? parseInt(formData.get("seed")) : null
+        };
+    } else if (networkType === 'WATTS_STROGATZ_GRAPH') {
+        networkParameters = {
+            amount_connections: parseInt(formData.get("ws_amount_connections")),
+            amount_nodes: parseInt(formData.get("ws_amount_nodes")),
+            shortcut_probability: parseFloat(formData.get("shortcut_probability")),
+            seed: formData.get("ws_seed") ? parseInt(formData.get("ws_seed")) : null
+        };
+    }
+    
+    const waveformType = formData.get("wave_form_type");
+    let waveformParameters = {};
+    
+    if (waveformType === 'sin') {
+        waveformParameters = {
+            vo: parseFloat(formData.get("vo")),
+            amplitude: parseFloat(formData.get("amplitude")),
+            frequency: parseFloat(formData.get("frequency")),
+            td: parseFloat(formData.get("td")) || 0,
+            theta: parseFloat(formData.get("theta")) || 0,
+            phase: parseFloat(formData.get("phase")) || 0
+        };
+    } else if (waveformType === 'pulse') {
+        waveformParameters = {
+            v1: parseFloat(formData.get("v1")),
+            v2: parseFloat(formData.get("v2")),
+            td: parseFloat(formData.get("pulse_td")) || 0,
+            tr: parseFloat(formData.get("tr")) || 0,
+            tf: parseFloat(formData.get("tf")) || 0,
+            pw: parseFloat(formData.get("pw")) || 0.5,
+            per: parseFloat(formData.get("per")) || 1,
+            np: parseInt(formData.get("np")) || 0
+        };
+    } else if (waveformType === 'pwl') {
+        const v2Array = formData.get("pwl_v2").split(",").map(v => parseFloat(v.trim()));
+        waveformParameters = {
+            v1: parseFloat(formData.get("pwl_v1")),
+            v2: v2Array,
+            td: parseFloat(formData.get("pwl_td")) || 0,
+            tr: parseFloat(formData.get("pwl_tr")) || 0,
+            tf: parseFloat(formData.get("pwl_tf")) || 0,
+            pw: parseFloat(formData.get("pwl_pw")) || 0.5,
+            per: parseFloat(formData.get("pwl_per")) || 1,
+            np: parseInt(formData.get("pwl_np")) || 0
+        };
+    }
+    
+    return {
+        model: model,
+        subcircuit: {
+            model_parameters: {
+                alpha: parseFloat(formData.get("alpha")),
+                beta: parseFloat(formData.get("beta")),
+                rinit: parseFloat(formData.get("rinit")),
+                roff: parseFloat(formData.get("roff")),
+                ron: parseFloat(formData.get("ron")),
+                vt: parseFloat(formData.get("vt"))
+            },
+            name: "memristor",
+            nodes: ["pl", "mn", "x"]
+        },
+        input_parameters: {
+            source_number: parseInt(formData.get("source_number")),
+            n_plus: formData.get("n_plus"),
+            n_minus: formData.get("n_minus"),
+            wave_form: {
+                type: waveformType,
+                parameters: waveformParameters
+            }
+        },
+        simulation_parameters: {
+            analysis_type: formData.get("analysis_type"),
+            tstep: parseFloat(formData.get("tstep")),
+            tstop: parseFloat(formData.get("tstop")),
+            tstart: parseFloat(formData.get("tstart")) || 0,
+            tmax: parseFloat(formData.get("tmax")) || null,
+            uic: formData.get("uic") === "on"
+        },
+        export_parameters: {
+            model_simulation_folder: modelSimulationFolder,
+            folder_name: formData.get("folder_name"),
+            file_name: formData.get("file_name"),
+            magnitudes: magnitudes
+        },
+        network_type: networkType,
+        network_parameters: networkParameters,
+        amount_iterations: 1,
+        plot_types: plotTypes
+    };
+}
+
+document.getElementById("simulationForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+    
+    if (simulationInProgress) {
+        showMessage("A simulation is already running. Please wait for it to complete.", true);
+        return;
+    }
+    
+    try {
+        const formData = new FormData(this);
+        
+        const missingFields = validateForm(formData);
+        if (missingFields.length > 0) {
+            showMessage(`Please fill in the following required fields: ${missingFields.join(", ")}`, true);
+            return;
+        }
+        
+        const data = buildRequestData(formData);
+        
+        showProgressModal();
+        
+        currentAbortController = new AbortController();
+        
+        fetch("{% url 'form' %}", {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": formData.get("csrfmiddlewaretoken")
+            },
+            signal: currentAbortController.signal
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    try {
+                        const errorData = JSON.parse(text);
+                        throw new Error(JSON.stringify(errorData));
+                    } catch (e) {
+                        throw new Error(text || `HTTP ${response.status}: ${response.statusText}`);
+                    }
+                });
+            }
+            
+            return response.blob();
+        })
+        .then(blob => {
+            hideProgressModal();
+            
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            
+            const folderName = formData.get("folder_name");
+            a.download = `simulation_${folderName}.zip`;
+            
+            document.body.appendChild(a);
+            a.click();
+            
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showMessage("Simulation completed successfully! The results file has been downloaded.");
+        })
+        .catch(error => {
+            hideProgressModal();
+            
+            if (error.name === 'AbortError') {
+                return;
+            }
+            
+            console.error("Error:", error);
+            let errorMessage = "An error occurred while executing the simulation";
+            
+            try {
+                const errorData = JSON.parse(error.message);
+                if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                } else if (typeof errorData === 'object') {
+                    errorMessage = Object.values(errorData).join(", ");
+                }
+            } catch (e) {
+                errorMessage = error.message;
+            }
+            
+            showMessage(errorMessage, true);
+        });
+        
+    } catch (error) {
+        hideProgressModal();
+        console.error("Client error:", error);
+        showMessage("Form validation error: " + error.message, true);
+    }
+});
+
+updateWaveformParameters();
+updateNetworkParameters();
+</script>
+
+</body>
+</html>
