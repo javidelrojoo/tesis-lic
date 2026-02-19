@@ -4,6 +4,7 @@ from skimage.morphology import remove_small_holes, opening, disk, skeletonize, d
 from skan import Skeleton
 from skan.csr import skeleton_to_nx
 import networkx as nx
+import matplotlib.pyplot as plt
 
 class SkeletonAnalysis:
     def __init__(self, img_path):
@@ -35,13 +36,12 @@ class SkeletonAnalysis:
     def get_network(self):
         skeleton = Skeleton(self.skeleton_img)
         self.G = skeleton_to_nx(skeleton)
-        
+        self.node_coords = np.array(skeleton.coordinates)
         if self.has_electrodes:
-            node_coords = np.array(skeleton.coordinates)
             electrode_nodes1 = []
             electrode_nodes2 = []
 
-            for node_id, (y, x) in enumerate(node_coords):
+            for node_id, (y, x) in enumerate(self.node_coords):
                 if self.contact_points1[int(y), int(x)]:
                     electrode_nodes1.append(node_id)
                 if self.contact_points2[int(y), int(x)]:
@@ -90,3 +90,36 @@ class SkeletonAnalysis:
             nx.write_graphml(self.L, path)
         else:
             nx.write_graphml(self.G, path)
+    
+    def plot_graph(self, save_path=None):
+        pos = {}
+        for i, n in enumerate(self.G.nodes):
+            if n == "Vin":
+                pos[n] = (2400, -1000)  # arbitrary position
+            elif n == "Vout":
+                pos[n] = (3200, -4500)  # arbitrary position
+            else:
+                y, x = self.node_coords[n]
+                pos[n] = (x, y)
+        plt.figure(figsize=(8, 8))
+        nx.draw(self.G, pos, node_size=25, width=0.8)
+        plt.imshow(self.img, cmap='gray')
+        plt.axis('off')
+        if save_path:
+            plt.savefig(save_path, bbox_inches='tight', pad_inches=0, dpi=400)
+        plt.show()
+    
+    def complete_analysis(self, electrodes_path=None, save_graph_path=None, plot=True, save_plot_path=None):
+        self.img_cleaning()
+        if electrodes_path:
+            self.load_electrodes(*electrodes_path)
+        self.skeletonize()
+        self.get_network()
+        self.clean_network()
+        self.convert_to_line_graph()
+        if save_graph_path:
+            self.save_graph(save_graph_path)
+        if plot:
+            self.plot_graph(save_plot_path)
+    
+    
