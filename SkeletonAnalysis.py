@@ -17,7 +17,7 @@ class SkeletonAnalysis:
         self.has_electrodes = True
     
     def img_cleaning(self):
-        self.img = remove_small_holes(self.img.astype(bool), max_size=30)
+        self.img = remove_small_holes(self.img.astype(bool), area_threshold=30)
         self.img = opening(self.img, footprint=disk(1))
     
     def skeletonize(self):
