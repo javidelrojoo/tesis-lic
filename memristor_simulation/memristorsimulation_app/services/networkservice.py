@@ -126,7 +126,7 @@ class NetworkService:
 
     def _generate_netlist(self):
 
-        G = nx.read_graphml("../muestras/M3/M30007.graphml")
+        G = nx.read_graphml("../muestras/M3/M3.graphml")
 
         for edge in G.edges:
             node1 = edge[0]
