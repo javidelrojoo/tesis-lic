@@ -1,6 +1,7 @@
 import time
 import networkx as nx
 import pandas as pd
+import numpy as np
 
 from abc import ABC, abstractmethod
 from dataclasses import fields, dataclass, asdict, field
@@ -131,7 +132,12 @@ class DeviceParameters:
     subcircuit: str
 
     def get_device(self) -> str:
-        return f"{self.device_name}{self.device_number} {' '.join(self.nodes)} {self.subcircuit}"
+        ohmic_prob = 0.01
+        if np.random.rand() < ohmic_prob:
+            nodos_resistencia = ' '.join(self.nodes[:2])
+            return f"R{self.device_number} {nodos_resistencia} 8.5m"
+        else:
+            return f"{self.device_name}{self.device_number} {' '.join(self.nodes)} {self.subcircuit}"
 
 
 @dataclass()
