@@ -1,0 +1,22 @@
+LTspice 26.0.1 for Windows
+Circuit: C:\Users\javit\Desktop\tesis-lic\memristor_simulation\memristorsimulation_app\simulation_results\pershin_simulations\p_06_1773162768\pershin_circuit_file.cir
+Start Time: Tue Mar 10 14:32:49 2026
+C:\Users\javit\Desktop\tesis-lic\memristor_simulation\memristorsimulation_app\simulation_results\pershin_simulations\p_06_1773162768\pershin_circuit_file.cir(8): This sub-circuit cannot be instantiated because it contains these syntax errors:
+C:\Users\javit\Desktop\tesis-lic\memristor_simulation\memristorsimulation_app\simulation_results\pershin_simulations\p_06_1773162768\pershin.sub(8): Expected expression here.
+Bx 0 x I='(f1(V(pl,mn))>0) && (V(x)<Roff) ? {f1(V(pl,mn))}: (f1(V(pl,mn))<0) && (V(x)>Ron) ? {f1(V(pl,mn))}: {0}'
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+C:\Users\javit\Desktop\tesis-lic\memristor_simulation\memristorsimulation_app\simulation_results\pershin_simulations\p_06_1773162768\pershin.sub(8): Expected "'" here.
+Bx 0 x I='(f1(V(pl,mn))>0) && (V(x)<Roff) ? {f1(V(pl,mn))}: (f1(V(pl,mn))<0) && (V(x)>Ron) ? {f1(V(pl,mn))}: {0}'
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+C:\Users\javit\Desktop\tesis-lic\memristor_simulation\memristorsimulation_app\simulation_results\pershin_simulations\p_06_1773162768\pershin.sub(8): Expected expression here.
+Bx 0 x I='(f1(V(pl,mn))>0) && (V(x)<Roff) ? {f1(V(pl,mn))}: (f1(V(pl,mn))<0) && (V(x)>Ron) ? {f1(V(pl,mn))}: {0}'
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+C:\Users\javit\Desktop\tesis-lic\memristor_simulation\memristorsimulation_app\simulation_results\pershin_simulations\p_06_1773162768\pershin.sub(8): Unknown parameter
+Bx 0 x I='(f1(V(pl,mn))>0) && (V(x)<Roff) ? {f1(V(pl,mn))}: (f1(V(pl,mn))<0) && (V(x)>Ron) ? {f1(V(pl,mn))}: {0}'
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+xmem0 n12167_12400 n12400_12732 l0 memristor
+                                   ^^^^^^^^^
