@@ -132,7 +132,7 @@ class DeviceParameters:
     subcircuit: str
 
     def get_device(self) -> str:
-        ohmic_prob = 0.7
+        ohmic_prob = 0.5
         if np.random.rand() < ohmic_prob:
             nodos_resistencia = ' '.join(self.nodes[:2])
             return f"R{self.device_number} {nodos_resistencia} 8.5m"
