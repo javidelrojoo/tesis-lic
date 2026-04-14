@@ -2,9 +2,51 @@ import networkx as nx
 import numpy as np
 import itertools
 import matplotlib.pyplot as plt
+import cv2
 
-path = 'muestras/M3/M30007.graphml'
+
+#%% Adaptive Binarization
+img_path = 'muestras/M4/M4.tif'
+
+img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+
+BLOCK_SIZE = 151  # debe ser impar
+C = 15
+INTENSITY_THRESH = 55
+
+pad = BLOCK_SIZE // 2
+img_padded = cv2.copyMakeBorder(img, pad, pad, pad, pad, cv2.BORDER_REPLICATE)
+
+mask_adaptive_padded = cv2.adaptiveThreshold(img_padded, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                             cv2.THRESH_BINARY, BLOCK_SIZE, C)
+
+mask_adaptive = mask_adaptive_padded[pad:-pad, pad:-pad]
+
+mask_adaptive[img < INTENSITY_THRESH] = 0
+
+def crear_superposicion_color(base_gris, mascara_binaria, color_rgb=[255, 0, 0]):
+    base_rgb = cv2.cvtColor(base_gris, cv2.COLOR_GRAY2RGB)
+    es_objeto = mascara_binaria > 127
+    base_rgb[es_objeto] = color_rgb
+    return base_rgb
+
+superposicion_adaptive = crear_superposicion_color(img, mask_adaptive, [220, 20, 60])
+
+
+plt.close('all')
+plt.figure(figsize=(12, 6))
+
+plt.imshow(superposicion_adaptive)
+plt.title(f'Superposicion: Adaptativo Gaussiano (block={BLOCK_SIZE}, C={C})\n(Rojo = Binarizado)')
+plt.axis('off')
+
+plt.tight_layout()
+plt.show()
+
+# cv2.imwrite('muestras/M1/M1_binary_adaptive.tif', mask_adaptive)
+
 #%% Node Merger
+path = 'muestras/M3/M30007.graphml'
 G = nx.Graph(nx.read_graphml(path))
 
 edges = list(G.edges())
