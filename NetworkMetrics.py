@@ -7,10 +7,16 @@ class NetworkMetrics:
     def __init__(self, G):
         self.G = G.copy()
 
-    def get_avg_degree(self):
+    def get_avg_degree(self, return_var = False):
         """Calcula el grado promedio de la red."""
         degrees = [d for n, d in self.G.degree()]
+        if return_var:
+            return np.mean(degrees), np.var(degrees)
+        
         return np.mean(degrees)
+    
+    def get_degree_hist(self):
+        return nx.degree_histogram(self.G)
 
     def get_density(self):
         """Densidad de la red (aristas existentes vs posibles)."""
@@ -19,6 +25,16 @@ class NetworkMetrics:
     def get_avg_clustering(self):
         """Coeficiente de clustering promedio (CCoeff)."""
         return nx.average_clustering(self.G)
+
+    def get_communities(self, algorithm = 'greedy'):
+        if algorithm == "greedy":
+            communities_raw = community.greedy_modularity_communities(self.G)
+            self.communities = {
+                node: i
+                for i, comm in enumerate(communities_raw)
+                for node in comm
+            }
+            return self.communities
 
     def get_avg_path_length(self):
         """Longitud de camino promedio (PL). 
@@ -33,40 +49,11 @@ class NetworkMetrics:
 
     def get_modularity(self):
         """
-        Calcula la modularidad detectando comunidades automáticamente.
-        Usa el algoritmo Greedy (rápido y estándar).
+        Calcula la modularidad..
         """
-        try:
-            # Detectar comunidades
-            communities = community.greedy_modularity_communities(self.G)
-            # Calcular score de modularidad
-            return community.modularity(self.G, communities)
-        except:
-            return np.nan
+        return community.modularity(self.G, self.communities)
+        
 
-    def get_small_world_sigma(self):
-        """
-        Small-worldness (Sigma).
-        Compara el clustering y path length con un grafo aleatorio equivalente.
-        sigma > 1 indica small-world.
-        ADVERTENCIA: Es lento en grafos grandes (>500 nodos).
-        """
-        if len(self.G) > 500: return "Slow/Skip" # Omitir si es muy grande
-        if not nx.is_connected(self.G): return np.nan
-        try:
-            # niter=10 es bajo para velocidad, subir a 100 para precisión
-            return nx.sigma(self.G, niter=10, nrand=5) 
-        except:
-            return np.nan
-
-    def get_global_efficiency(self):
-        """Eficiencia Global (inverso del path length). Ideal para redes desconectadas."""
-        return nx.global_efficiency(self.G)
-
-    def get_assortativity(self):
-        """Si los nodos se conectan con otros de grado similar (Hubs con Hubs)."""
-        return nx.degree_assortativity_coefficient(self.G)
-    
     def run_metrics(self, verbose=False):
         """Ejecuta todos los cálculos y devuelve un diccionario con los resultados."""
         metrics = {
