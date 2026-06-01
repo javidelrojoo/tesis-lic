@@ -40,7 +40,7 @@ class SkeletonAnalysis:
     
     def get_network(self):
         skeleton = Skeleton(self.skeleton_img)
-        self.G = skeleton_to_nx(skeleton)
+        self.G = nx.Graph(skeleton_to_nx(skeleton))
         self.node_coords = np.array(skeleton.coordinates)
 
         if self.has_electrodes:
@@ -49,33 +49,47 @@ class SkeletonAnalysis:
 
             for node_id, (y, x) in enumerate(self.node_coords):
                 yi, xi = int(y), int(x)
-                # Nodo está en la zona de contacto: dentro de la dilatación pero fuera del electrodo
                 if self.electrode_dil1[yi, xi] and not self.electrode_mask1[yi, xi] and not self.electrode_mask2[yi, xi]:
                     electrode_nodes1.append(node_id)
                 if self.electrode_dil2[yi, xi] and not self.electrode_mask2[yi, xi] and not self.electrode_mask1[yi, xi]:
                     electrode_nodes2.append(node_id)
 
-            self.G.add_node("Vin")
-            self.G.add_node("Vout")
+            self.electrode_pos = {}
 
-            for n in electrode_nodes1:
-                self.G.add_edge("Vin", n)
-            for n in electrode_nodes2:
-                self.G.add_edge("Vout", n)
-            
+            for i, n in enumerate(electrode_nodes1):
+                node_name = f"Vin_{i}"
+                y, x = self.node_coords[n]
+                self.G.add_node(node_name)
+                self.G.add_edge(node_name, n)
+                self.electrode_pos[node_name] = (x, y)
+
+            for i, n in enumerate(electrode_nodes2):
+                node_name = f"Vout_{i}"
+                y, x = self.node_coords[n]
+                self.G.add_node(node_name)
+                self.G.add_edge(node_name, n)
+                self.electrode_pos[node_name] = (x, y)
+        
+        self.G.remove_edges_from(list(nx.selfloop_edges(self.G)))    
+        
     def clean_network(self):
+        electrode_nodes = {n for n in self.G.nodes if isinstance(n, str) and 
+                        (n.startswith("Vin_") or n.startswith("Vout_"))}
         changed = True
         while changed:
             changed = False
 
-            # Remove degree 1 nodes iteratively
-            deg1_nodes = [n for n, d in self.G.degree() if d == 1]
+            isolated = [n for n, d in self.G.degree() if d == 0]
+            if isolated:
+                self.G.remove_nodes_from(isolated)
+                changed = True
+
+            deg1_nodes = [n for n, d in self.G.degree() if d == 1 and n not in electrode_nodes]
             if deg1_nodes:
                 self.G.remove_nodes_from(deg1_nodes)
                 changed = True
 
-            # Collapse degree 2 nodes iteratively
-            deg2_nodes = [n for n, d in self.G.degree() if d == 2]
+            deg2_nodes = [n for n, d in self.G.degree() if d == 2 and n not in electrode_nodes]
             for n in deg2_nodes:
                 neighbors = list(self.G.neighbors(n))
                 if len(neighbors) == 2:
@@ -84,9 +98,14 @@ class SkeletonAnalysis:
                 self.G.remove_node(n)
                 changed = True
 
-            if any(nx.selfloop_edges(self.G)):
-                self.G.remove_edges_from(nx.selfloop_edges(self.G))
+            
+
+            edges_to_remove = [(u, v) for u, v in self.G.edges()
+                            if isinstance(u, str) and isinstance(v, str)]
+            if edges_to_remove:
+                self.G.remove_edges_from(edges_to_remove)
                 changed = True
+                
     
     def convert_to_line_graph(self):
         self.L = nx.line_graph(self.G)
@@ -100,41 +119,31 @@ class SkeletonAnalysis:
     
     def plot_graph(self, save_path=None):
         pos = {}
-        
-        if self.has_electrodes:
 
-            M1 = cv2.moments(self.electrode_mask1.astype(np.uint8))
-            M2 = cv2.moments(self.electrode_mask2.astype(np.uint8))
-            cx1 = int(M1["m10"] / M1["m00"])
-            cy1 = int(M1["m01"] / M1["m00"])
-            cx2 = int(M2["m10"] / M2["m00"])
-            cy2 = int(M2["m01"] / M2["m00"])
-            
         for n in self.G.nodes:
-            if n == "Vin":
-                pos[n] = (cx1, cy1)
-            elif n == "Vout":
-                pos[n] = (cx2, cy2)
+            if isinstance(n, str) and (n.startswith("Vin_") or n.startswith("Vout_")):
+                pos[n] = self.electrode_pos[n]
             else:
                 y, x = self.node_coords[n]
                 pos[n] = (x, y)
-                
+
         plt.figure(figsize=(8, 8))
-        plt.imshow(self.img, cmap='gray')  # Primero la imagen
+        plt.imshow(self.img, cmap='gray')
 
-        nodos_electrodos = [n for n in self.G.nodes if n in ("Vin", "Vout")]
-        nodos_red = [n for n in self.G.nodes if n not in ("Vin", "Vout")]
-
+        nodos_vin    = [n for n in self.G.nodes if isinstance(n, str) and n.startswith("Vin_")]
+        nodos_vout   = [n for n in self.G.nodes if isinstance(n, str) and n.startswith("Vout_")]
+        nodos_red    = [n for n in self.G.nodes if not (isinstance(n, str) and (n.startswith("Vin_") or n.startswith("Vout_")))]
 
         nx.draw_networkx_edges(self.G, pos, width=1.5, edge_color='green', node_size=25)
-        nx.draw_networkx_nodes(self.G, pos, nodelist=nodos_red, node_size=25, node_color='#1f78b4')
-        nx.draw_networkx_nodes(self.G, pos, nodelist=nodos_electrodos, node_size=150, node_color='red')
+        nx.draw_networkx_nodes(self.G, pos, nodelist=nodos_red,  node_size=25)
+        nx.draw_networkx_nodes(self.G, pos, nodelist=nodos_vin,  node_size=150, node_color='red')
+        nx.draw_networkx_nodes(self.G, pos, nodelist=nodos_vout, node_size=150, node_color='blue')
         plt.axis('off')
         if save_path:
             plt.savefig(save_path, bbox_inches='tight', pad_inches=0, dpi=400)
         plt.show()
     
-    def complete_analysis(self, electrodes_path=None, save_graph_path=None, plot=False, save_plot_path=None, verbose=False):
+    def complete_analysis(self, clean_network=True, electrodes_path=None, save_graph_path=None, plot=False, save_plot_path=None, verbose=False):
         if verbose:
             print("Iniciando análisis completo...")
         
@@ -155,9 +164,10 @@ class SkeletonAnalysis:
         if verbose:
             print("Red obtenida del esqueleto.")
         
-        self.clean_network()
-        if verbose:
-            print("Red limpiada.")
+        if clean_network:
+            self.clean_network()
+            if verbose:
+                print("Red limpiada.")
         
         self.convert_to_line_graph()
         if verbose:
@@ -172,5 +182,7 @@ class SkeletonAnalysis:
             self.plot_graph(save_plot_path)
             if verbose:
                 print("Gráfico generado.")
+        
+        return
     
     
