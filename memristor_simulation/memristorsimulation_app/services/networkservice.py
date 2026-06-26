@@ -125,30 +125,34 @@ class NetworkService:
         return network
 
     def _generate_netlist(self):
+        G = nx.read_graphml("../muestras/M4/M4_effective.graphml")
 
-        G = nx.read_graphml("../muestras/M3/M3.graphml")
+        # Unpack edges directly into u and v for cleaner reading
+        for u, v in G.edges:
+            u_str = str(u)
+            v_str = str(v)
 
-        for edge in G.edges:
-            node1 = edge[0]
-            node2 = edge[1]
-
-            node1 = tuple(int(i) if i.isdigit() else i for i in re.findall(r'[^(),\s]+', edge[0]))
-            node2 = tuple(int(i) if i.isdigit() else i for i in re.findall(r'[^(),\s]+', edge[1]))
-
-            if node1[1] == "'Vin'":
+            # --- Process Node 1 (u) ---
+            if 'Vin' in u_str:
                 n1 = "vin"
-            elif node1[1] == "'Vout'":
+            elif 'Vout' in u_str:
                 n1 = "gnd"
             else:
-                n1 = f"n{node1[0]}_{node1[1]}" # f"n{node1}"
+                # Safely extract alphanumeric parts. 
+                # e.g., "(12, 34)" becomes "n12_34", and "45" becomes "n45"
+                parts = re.findall(r'[^(),\s]+', u_str)
+                n1 = f"n{'_'.join(parts)}"
 
-            if node2[1] == "'Vin'":
+            # --- Process Node 2 (v) ---
+            if 'Vin' in v_str:
                 n2 = "vin"
-            elif node2[1] == "'Vout'":
+            elif 'Vout' in v_str:
                 n2 = "gnd"
             else:
-                n2 = f"n{node2[0]}_{node2[1]}" # f"n{node2}"
+                parts = re.findall(r'[^(),\s]+', v_str)
+                n2 = f"n{'_'.join(parts)}"
 
+            # Prevent self-loops in the netlist connections
             if n1 == n2:
                 continue
 

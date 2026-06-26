@@ -37,19 +37,17 @@ class TimeMeasureService:
         self, enable_print_time_measure: bool = True
     ) -> TimeMeasure:
         time_measure = TimeMeasure(start_time=self.init_python_execution_time_measure())
+        simulation_log = b""
+        linux_time_output = b""
 
         try:
             # Definir el comando base de ngspice
-            # -b es batch mode (fundamental para que no se abra una ventana)
             self.execute_command = f"ngspice -b {self.circuit_file_path}"
             
-            # En Linux agregamos el prefijo 'time' si realmente lo necesitás, 
-            # aunque Python ya está midiendo el tiempo.
             if self._is_os_linux():
                 self.execute_command = f"time {self.execute_command} 2>&1"
                 popen_cmd = ["bash", "-c", self.execute_command, "_"]
             else:
-                # En Windows ejecutamos ngspice directamente
                 popen_cmd = ["ngspice", "-b", self.circuit_file_path]
 
             logger.info(f"Executing command: {self.execute_command}")
@@ -64,23 +62,35 @@ class TimeMeasureService:
 
             simulation_log, linux_time_output = process.communicate()
 
+            # --- FIX: Combine stdout and stderr so errors are visible in the log ---
+            full_log_text = "=== STDOUT ===\n" + simulation_log.decode('utf-8', errors='replace')
+            if linux_time_output:
+                full_log_text += "\n\n=== STDERR ===\n" + linux_time_output.decode('utf-8', errors='replace')
+
+            # --- FIX: Write the log immediately so we don't lose it if a crash happens later ---
+            self.write_simulation_log(
+                simulation_log=full_log_text, time_measure=time_measure
+            )
+
             if process.returncode != 0:
                 logger.error(
                     f"Simulation process failed with return code: {process.returncode}"
                 )
+                logger.error(f"Error details: {linux_time_output.decode('utf-8', errors='replace')}")
             else:
                 logger.info(f"Simulation process ended succesfully")
 
             time_measure = self.write_python_time_measure_into_csv(time_measure)
-            self.write_linux_time_measure_into_csv(linux_time_output, time_measure)
+            
+            # --- FIX: Only parse the linux time if ngspice succeeded ---
+            if process.returncode == 0:
+                self.write_linux_time_measure_into_csv(linux_time_output, time_measure)
 
         except Exception as e:
             logger.error(f"Error during time measurement execution: {type(e).__name__} - {str(e)}")
             raise e
 
-        self.write_simulation_log(
-            simulation_log=simulation_log.decode(), time_measure=time_measure
-        )
+        # Removed the write_simulation_log call from here since it is now safely executed inside the try block
 
         if enable_print_time_measure:
             self.print_time_measure(time_measure)
