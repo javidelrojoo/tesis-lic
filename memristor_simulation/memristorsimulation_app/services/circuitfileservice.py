@@ -1,3 +1,4 @@
+import os
 from typing import TextIO, List
 from memristorsimulation_app.representations import (
     InputParameters,
@@ -30,9 +31,11 @@ class CircuitFileService:
 
     def _write_dependencies(self, f: TextIO) -> None:
         f.write("\n\n* DEPENDENCIES:\n")
-        f.write(
-            f".include {self.directories_management_service.get_subcircuit_file_path()}"
+        # Extract just the filename so NGSpice doesn't choke on path spaces
+        subcircuit_filename = os.path.basename(
+            self.directories_management_service.get_subcircuit_file_path()
         )
+        f.write(f".include {subcircuit_filename}")
 
     def _write_components(self, file: TextIO) -> None:
         file.write("\n\n* COMPONENTS:\n")
@@ -51,13 +54,16 @@ class CircuitFileService:
         file.write("set wr_vecnames\n")
         file.write("set wr_singlescale\n")
 
+        # Extract just the filename for wrdata
+        export_filename = os.path.basename(
+            self.directories_management_service.get_export_simulation_file_path()
+        )
+
         if self.ignore_states:
-            file.write(
-                f"wrdata {self.directories_management_service.get_export_simulation_file_path()} vin i(v1)\n"
-            )
+            file.write(f"wrdata {export_filename} vin i(v1)\n")
         else:
             file.write(
-                f"wrdata {self.directories_management_service.get_export_simulation_file_path()} "
+                f"wrdata {export_filename} "
                 f"{self.directories_management_service.export_parameters.get_export_magnitudes()}\n"
             )
 
