@@ -288,6 +288,56 @@ def get_avg_path_length_igraph(G):
     return G_ig.connected_components().giant().average_path_length()
 
 
+def get_network_resistance(G, R_default=1.0):
+    """
+    Resistencia de dos terminales entre electrodos (Vin -> Vout), resolviendo la
+    red como un circuito resistivo por el metodo del potencial de nodos
+    (Laplaciana pesada por conductancias).
+
+    Se unen todos los Vin a un supernodo SOURCE y todos los Vout a un SINK, se
+    inyecta 1 A y se mide la tension: con I = 1, V = R. El peso de arista
+    ``weight`` se interpreta como resistencia (``R_default`` si falta).
+
+    Devuelve inf si la red esta abierta entre electrodos. Lanza ValueError si no
+    hay electrodos.
+    """
+    Vin, Vout = get_electrode_nodes(G)
+    if not Vin or not Vout:
+        raise ValueError("No se encontraron nodos de entrada (Vin) o salida (Vout).")
+
+    G_work = G.copy()
+    for n in Vin:
+        G_work.add_edge("SOURCE", n, weight=1e-12)   # resistencia despreciable
+    for n in Vout:
+        G_work.add_edge("SINK", n, weight=1e-12)
+
+    # Si no hay camino entre electrodos la resistencia es infinita (red abierta).
+    if not nx.has_path(G_work, "SOURCE", "SINK"):
+        return float("inf")
+
+    for u, v, data in G_work.edges(data=True):
+        r_val = data.get("weight", R_default)
+        data["conductance"] = 1.0 / r_val if r_val > 0 else 1e12
+
+    nodos = list(G_work.nodes())
+    idx_source = nodos.index("SOURCE")
+    idx_sink = nodos.index("SINK")
+
+    Lap = nx.laplacian_matrix(G_work, weight="conductance").toarray()
+    # Fijamos el SINK a 0 V eliminando su fila/columna
+    L_red = np.delete(np.delete(Lap, idx_sink, axis=0), idx_sink, axis=1)
+
+    I_red = np.zeros(len(nodos) - 1)
+    new_idx_source = idx_source if idx_source < idx_sink else idx_source - 1
+    I_red[new_idx_source] = 1.0  # inyectamos 1 A en SOURCE
+
+    try:
+        V_red = np.linalg.solve(L_red, I_red)
+        return float(V_red[new_idx_source])  # V = R cuando I = 1
+    except np.linalg.LinAlgError:
+        return float("inf")  # red abierta
+
+
 # =============================================================================
 #  Graficos
 #
@@ -519,6 +569,9 @@ class NetworkMetrics:
     def get_avg_path_length_igraph(self):
         return get_avg_path_length_igraph(self.G)
 
+    def get_network_resistance(self, R_default=1.0):
+        return get_network_resistance(self.G, R_default=R_default)
+
     # --- Graficos ---
     def plot_degree_distribution(self, ax=None, color="tab:blue", alpha=1.0, title=None, logy=True):
         return plot_degree_distribution(self.G, ax=ax, color=color, alpha=alpha, title=title, logy=logy)
@@ -561,6 +614,10 @@ class NetworkMetrics:
         if Vin and Vout:
             metrics["Average Path Length (Vin<->Vout)"] = self.get_avg_path_length_electrodes()
             metrics["Global Efficiency (Vin<->Vout)"] = self.get_global_efficiency_electrodes()
+            try:
+                metrics["Network Resistance (Vin->Vout)"] = self.get_network_resistance()
+            except Exception:
+                pass
 
         if verbose:
             for key, value in metrics.items():
