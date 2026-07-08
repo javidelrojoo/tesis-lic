@@ -1,3 +1,4 @@
 memristor_simulation/.pixi/
 memristor_simulation/staticfiles/
 **/__pycache__/
+memristor_simulation/memristor_simulation_app/simulation_results
